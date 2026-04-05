@@ -5,6 +5,8 @@ import { protect, admin } from "../middleware/authMiddleware.js"
 import { sendEmail } from "../utils/emailService.js"
 
 const router = express.Router()
+const BRAND_NAME = "Seen Alif"
+const EMAIL_LOGO_URL = "https://www.seenalif.com/seenalif.png"
 
 // @desc    Send OTP for bulk purchase inquiry (for non-logged-in users)
 // @route   POST /api/bulk-purchase/send-otp
@@ -33,20 +35,20 @@ router.post("/send-otp", async (req, res) => {
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; padding: 32px;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <img src="https://www.graba2z.ae/logo.png" alt="Graba2z Logo" style="max-width: 200px; height: auto;">
+          <img src="${EMAIL_LOGO_URL}" alt="${BRAND_NAME} Logo" style="max-width: 200px; height: auto;">
         </div>
         <h2 style="color: #2c3e50; text-align: center;">Bulk Purchase Inquiry Verification</h2>
-        <p>Thank you for your interest in bulk purchasing from Graba2z.</p>
+        <p>Thank you for your interest in bulk purchasing from ${BRAND_NAME}.</p>
         <p>Please verify your email address by entering the verification code below:</p>
         <div style="background: #f5f5f5; border-radius: 8px; padding: 24px; text-align: center; margin: 24px 0;">
           <div style="font-size: 32px; font-weight: bold; color: #84cc16; letter-spacing: 4px;">${otpCode}</div>
         </div>
         <p style="color: #666; font-size: 14px;">This code will expire in 10 minutes.</p>
-        <p style="color: #888; font-size: 12px; margin-top: 32px;">&copy; ${new Date().getFullYear()} Graba2z. All rights reserved.</p>
+        <p style="color: #888; font-size: 12px; margin-top: 32px;">&copy; ${new Date().getFullYear()} ${BRAND_NAME}. All rights reserved.</p>
       </div>
     `
 
-    await sendEmail(email, "Verify Your Bulk Purchase Inquiry - Graba2z", html, "support")
+    await sendEmail(email, `Verify Your Bulk Purchase Inquiry - ${BRAND_NAME}`, html, "support")
 
     res.status(200).json({
       success: true,
@@ -119,7 +121,7 @@ router.post("/", async (req, res) => {
     const confirmationHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; padding: 32px;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <img src="https://www.graba2z.ae/logo.png" alt="Graba2z Logo" style="max-width: 200px; height: auto;">
+          <img src="${EMAIL_LOGO_URL}" alt="${BRAND_NAME} Logo" style="max-width: 200px; height: auto;">
         </div>
         <h2 style="color: #2c3e50; text-align: center;">Bulk Purchase Inquiry Received</h2>
         <p>Dear ${name},</p>
@@ -132,11 +134,11 @@ router.post("/", async (req, res) => {
           ${note ? `<p style="margin: 8px 0;"><strong>Note:</strong> ${note}</p>` : ""}
         </div>
         <p>Our team typically responds within 24 hours during business days.</p>
-        <p style="color: #888; font-size: 12px; margin-top: 32px;">&copy; ${new Date().getFullYear()} Graba2z. All rights reserved.</p>
+        <p style="color: #888; font-size: 12px; margin-top: 32px;">&copy; ${new Date().getFullYear()} ${BRAND_NAME}. All rights reserved.</p>
       </div>
     `
 
-    await sendEmail(email, "Bulk Purchase Inquiry Confirmation - Graba2z", confirmationHtml, "support")
+    await sendEmail(email, `Bulk Purchase Inquiry Confirmation - ${BRAND_NAME}`, confirmationHtml, "support")
 
     res.status(201).json({
       success: true,

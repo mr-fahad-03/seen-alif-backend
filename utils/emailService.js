@@ -1,5 +1,17 @@
 import nodemailer from "nodemailer"
 
+const BRAND_NAME = "Seen Alif"
+const SITE_URL = "https://www.seenalif.com"
+const EMAIL_LOGO_URL = `${SITE_URL}/seenalif.png`
+const SUPPORT_CONTACT_EMAIL = (process.env.SUPPORT_EMAIL_USER || "support@superboss.ae").trim()
+const ORDER_CONTACT_EMAIL = (process.env.ORDER_EMAIL_USER || "order@superboss.ae").trim()
+const SOCIAL_LINKS = {
+  facebook: SITE_URL,
+  instagram: SITE_URL,
+  x: SITE_URL,
+  linkedin: SITE_URL,
+}
+
 // Helper to ensure image URLs are absolute for email clients
 const toAbsoluteUrl = (src) => {
   if (!src) return "https://via.placeholder.com/56?text=No+Image"
@@ -12,7 +24,7 @@ const toAbsoluteUrl = (src) => {
     process.env.SERVER_PUBLIC_URL ||
     process.env.API_BASE_URL ||
     process.env.FRONTEND_URL ||
-    "https://www.graba2z.ae"
+    SITE_URL
   if (s.startsWith("/")) return `${base}${s}`
   // otherwise treat as uploads path
   return `${base}/uploads/${s}`
@@ -29,7 +41,7 @@ const createTransporter = ({ host, port, secure, user, pass }) =>
     },
   })
 
-const ORDER_NOTIFICATION_EMAIL = (process.env.ORDER_NOTIFICATION_EMAIL || "order@grabatoz.ae").trim()
+const ORDER_NOTIFICATION_EMAIL = (process.env.ORDER_NOTIFICATION_EMAIL || ORDER_CONTACT_EMAIL).trim()
 
 const getOrderEmailRecipients = (customerEmail, includeCustomer = true) => {
   const candidates = []
@@ -105,7 +117,7 @@ const getMailConfig = (type) => {
         user: process.env.ORDER_EMAIL_USER,
         pass: process.env.ORDER_EMAIL_PASS,
       }),
-      from: `Graba2z Orders <${process.env.ORDER_EMAIL_USER}>`,
+      from: `${BRAND_NAME} Orders <${process.env.ORDER_EMAIL_USER}>`,
     }
   } else {
     return {
@@ -116,7 +128,7 @@ const getMailConfig = (type) => {
         user: process.env.SUPPORT_EMAIL_USER,
         pass: process.env.SUPPORT_EMAIL_PASS,
       }),
-      from: `Graba2z Support <${process.env.SUPPORT_EMAIL_USER}>`,
+      from: `${BRAND_NAME} Support <${process.env.SUPPORT_EMAIL_USER}>`,
     }
   }
 }
@@ -463,14 +475,14 @@ const getEmailTemplate = (type, data) => {
         <body>
           <div class="container">
             <div class="header">
-              <a href="https://www.graba2z.ae/" target="_blank">
-                <img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753105567/admin-logo_ruxcjj.png" alt="Graba2z Logo" />
+              <a href="${SITE_URL}/" target="_blank">
+                <img src="${EMAIL_LOGO_URL}" alt="${BRAND_NAME} Logo" />
               </a>
             </div>
             <div class="content">
               <h2>Email Verification</h2>
               <p>Hi <b>${data.name || "User"}</b>,<br />
-              Thank you for registering with Graba2z. Please verify your email address by entering the verification code below:</p>
+              Thank you for registering with ${BRAND_NAME}. Please verify your email address by entering the verification code below:</p>
               <div class="code-box">${data.code || "000000"}</div>
               <p style="margin: 16px 0 0 0; color: #1abc7b; font-weight: bold;">
                 Copy the code above and paste it on the website to verify your email.
@@ -479,18 +491,18 @@ const getEmailTemplate = (type, data) => {
             </div>
             <div class="footer">
               <div class="socials">
-                <a href="https://www.facebook.com/grabatozae/" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_1_axvzvv.jpg" alt="Facebook" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://www.instagram.com/grabatoz/" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107124/WhatsApp_Image_2025-07-21_at_7.10.18_AM_xgjv5f.jpg" alt="Instagram" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://x.com/GrabAtoz" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107545/WhatsApp_Image_2025-07-21_at_7.10.18_AM_2_cwzjg6.png" alt="X" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://www.linkedin.com/company/grabatozae" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_3_ll6y2i.jpg" alt="LinkedIn" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.facebook}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_1_axvzvv.jpg" alt="Facebook" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.instagram}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107124/WhatsApp_Image_2025-07-21_at_7.10.18_AM_xgjv5f.jpg" alt="Instagram" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.x}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107545/WhatsApp_Image_2025-07-21_at_7.10.18_AM_2_cwzjg6.png" alt="X" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.linkedin}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_3_ll6y2i.jpg" alt="LinkedIn" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
               </div>
-              <p>This email was sent by: support@grabatoz.ae</p>
+              <p>This email was sent by: ${SUPPORT_CONTACT_EMAIL}</p>
               <br/>
               <p>Kindly Do Not Reply to this Email</p>
               <br/>
               <div style="margin-top: 10px; color: #888;">
-                &copy; 2025 Graba2z. All rights reserved.<br />
-                <span style="font-size:12px;">If you did not enter this email address when signing up for Graba2z, disregard this message.</span>
+                &copy; ${new Date().getFullYear()} ${BRAND_NAME}. All rights reserved.<br />
+                <span style="font-size:12px;">If you did not enter this email address when signing up for ${BRAND_NAME}, disregard this message.</span>
               </div>
             </div>
           </div>
@@ -756,8 +768,8 @@ const getEmailTemplate = (type, data) => {
         <body>
           <div class="container">
             <div class="header">
-              <a href="https://www.graba2z.ae/" target="_blank">
-                <img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753105567/admin-logo_ruxcjj.png" alt="Graba2z Logo" />
+              <a href="${SITE_URL}/" target="_blank">
+                <img src="${EMAIL_LOGO_URL}" alt="${BRAND_NAME} Logo" />
               </a>
             </div>
             <div class="content">
@@ -771,7 +783,7 @@ const getEmailTemplate = (type, data) => {
                 </div>
               </div>
               <div style="text-align:center;margin-top:16px;">
-                <a href="https://www.graba2z.ae/track-order" 
+                <a href="${SITE_URL}/track-order" 
                    style="display:inline-block;background:#84cc16;color:#ffffff;text-decoration:none;padding:14px 32px;font-size:14px;font-weight:600;border-radius:28px;letter-spacing:0.5px;font-family:'Segoe UI',Tahoma,Arial,sans-serif;">
                   TRACK YOUR ORDER
                 </a>
@@ -779,18 +791,18 @@ const getEmailTemplate = (type, data) => {
             </div>
             <div class="footer">
               <div class="socials">
-                <a href="https://www.facebook.com/grabatozae/" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_1_axvzvv.jpg" alt="Facebook" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://www.instagram.com/grabatoz/" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107124/WhatsApp_Image_2025-07-21_at_7.10.18_AM_xgjv5f.jpg" alt="Instagram" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://x.com/GrabAtoz" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107545/WhatsApp_Image_2025-07-21_at_7.10.18_AM_2_cwzjg6.png" alt="X" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://www.linkedin.com/company/grabatozae" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_3_ll6y2i.jpg" alt="LinkedIn" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.facebook}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_1_axvzvv.jpg" alt="Facebook" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.instagram}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107124/WhatsApp_Image_2025-07-21_at_7.10.18_AM_xgjv5f.jpg" alt="Instagram" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.x}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107545/WhatsApp_Image_2025-07-21_at_7.10.18_AM_2_cwzjg6.png" alt="X" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.linkedin}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_3_ll6y2i.jpg" alt="LinkedIn" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
               </div>
-              <p>This email was sent by: order@grabatoz.ae</p>
+              <p>This email was sent by: ${ORDER_CONTACT_EMAIL}</p>
               <br/>
               <p>Kindly Do Not Reply to this Email</p>
               <br/>
               <div style="margin-top: 10px; color: #888;">
-                &copy; 2025 Graba2z. All rights reserved.<br />
-                <span style="font-size:12px;">If you did not enter this email address when signing up for Graba2z, disregard this message.</span>
+                &copy; ${new Date().getFullYear()} ${BRAND_NAME}. All rights reserved.<br />
+                <span style="font-size:12px;">If you did not enter this email address when signing up for ${BRAND_NAME}, disregard this message.</span>
               </div>
             </div>
           </div>
@@ -1004,8 +1016,8 @@ const getEmailTemplate = (type, data) => {
         <body>
           <div class="container">
             <div class="header">
-              <a href="https://www.graba2z.ae/" target="_blank">
-                <img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753105567/admin-logo_ruxcjj.png" alt="Graba2z Logo" />
+              <a href="${SITE_URL}/" target="_blank">
+                <img src="${EMAIL_LOGO_URL}" alt="${BRAND_NAME} Logo" />
               </a>
             </div>
             <div class="content">
@@ -1030,7 +1042,7 @@ const getEmailTemplate = (type, data) => {
               </div>
               ` : ''}
               <div style="text-align:center;margin-top:16px;">
-                <a href="https://www.graba2z.ae/track-order" 
+                <a href="${SITE_URL}/track-order" 
                    style="display:inline-block;background:#84cc16;color:#ffffff;text-decoration:none;padding:14px 32px;font-size:14px;font-weight:600;border-radius:28px;letter-spacing:0.5px;font-family:'Segoe UI',Tahoma,Arial,sans-serif;">
                   TRACK YOUR ORDER
                 </a>
@@ -1038,18 +1050,18 @@ const getEmailTemplate = (type, data) => {
             </div>
             <div class="footer">
               <div class="socials">
-                <a href="https://www.facebook.com/grabatozae/" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_1_axvzvv.jpg" alt="Facebook" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://www.instagram.com/grabatoz/" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107124/WhatsApp_Image_2025-07-21_at_7.10.18_AM_xgjv5f.jpg" alt="Instagram" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://x.com/GrabAtoz" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107545/WhatsApp_Image_2025-07-21_at_7.10.18_AM_2_cwzjg6.png" alt="X" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://www.linkedin.com/company/grabatozae" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_3_ll6y2i.jpg" alt="LinkedIn" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.facebook}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_1_axvzvv.jpg" alt="Facebook" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.instagram}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107124/WhatsApp_Image_2025-07-21_at_7.10.18_AM_xgjv5f.jpg" alt="Instagram" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.x}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107545/WhatsApp_Image_2025-07-21_at_7.10.18_AM_2_cwzjg6.png" alt="X" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.linkedin}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_3_ll6y2i.jpg" alt="LinkedIn" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
               </div>
-              <p>This email was sent by: order@grabatoz.ae</p>
+              <p>This email was sent by: ${ORDER_CONTACT_EMAIL}</p>
               <br/>
               <p>Kindly Do Not Reply to this Email</p>
               <br/>
               <div style="margin-top: 10px; color: #888;">
-                &copy; 2025 Graba2z. All rights reserved.<br />
-                <span style="font-size:12px;">If you did not enter this email address when signing up for Graba2z, disregard this message.</span>
+                &copy; ${new Date().getFullYear()} ${BRAND_NAME}. All rights reserved.<br />
+                <span style="font-size:12px;">If you did not enter this email address when signing up for ${BRAND_NAME}, disregard this message.</span>
               </div>
             </div>
           </div>
@@ -1179,15 +1191,15 @@ const getEmailTemplate = (type, data) => {
         <body>
           <div class="container">
             <div class="header">
-              <a href="https://www.graba2z.ae/" target="_blank">
-                <img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753105567/admin-logo_ruxcjj.png" alt="Graba2z Logo" />
+              <a href="${SITE_URL}/" target="_blank">
+                <img src="${EMAIL_LOGO_URL}" alt="${BRAND_NAME} Logo" />
               </a>
               <div class="warning-icon">⚠️</div>
             </div>
             <div class="content">
               <h2>Account Deletion Request</h2>
               <p>Hi <b>${data.name || "User"}</b>,<br />
-              We received a request to permanently delete your Graba2z account. If you want to proceed, please enter the verification code below:</p>
+              We received a request to permanently delete your ${BRAND_NAME} account. If you want to proceed, please enter the verification code below:</p>
               <div class="code-box">${data.code || "000000"}</div>
               <div class="warning-box">
                 <strong>⚠️ Warning:</strong> This action is permanent and cannot be undone. Once your account is deleted:
@@ -1205,17 +1217,17 @@ const getEmailTemplate = (type, data) => {
             </div>
             <div class="footer">
               <div class="socials">
-                <a href="https://www.facebook.com/grabatozae/" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_1_axvzvv.jpg" alt="Facebook" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://www.instagram.com/grabatoz/" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107124/WhatsApp_Image_2025-07-21_at_7.10.18_AM_xgjv5f.jpg" alt="Instagram" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://x.com/GrabAtoz" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107545/WhatsApp_Image_2025-07-21_at_7.10.18_AM_2_cwzjg6.png" alt="X" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://www.linkedin.com/company/grabatozae" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_3_ll6y2i.jpg" alt="LinkedIn" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.facebook}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_1_axvzvv.jpg" alt="Facebook" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.instagram}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107124/WhatsApp_Image_2025-07-21_at_7.10.18_AM_xgjv5f.jpg" alt="Instagram" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.x}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107545/WhatsApp_Image_2025-07-21_at_7.10.18_AM_2_cwzjg6.png" alt="X" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.linkedin}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_3_ll6y2i.jpg" alt="LinkedIn" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
               </div>
-              <p>This email was sent by: support@grabatoz.ae</p>
+              <p>This email was sent by: ${SUPPORT_CONTACT_EMAIL}</p>
               <br/>
               <p>Kindly Do Not Reply to this Email</p>
               <br/>
               <div style="margin-top: 10px; color: #888;">
-                &copy; 2025 Graba2z. All rights reserved.<br />
+                &copy; ${new Date().getFullYear()} ${BRAND_NAME}. All rights reserved.<br />
                 <span style="font-size:12px;">If you did not request account deletion, please secure your account immediately.</span>
               </div>
             </div>
@@ -1329,8 +1341,8 @@ const getEmailTemplate = (type, data) => {
         <body>
           <div class="container">
             <div class="header">
-              <a href="https://www.graba2z.ae/" target="_blank">
-                <img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753105567/admin-logo_ruxcjj.png" alt="Graba2z Logo" />
+              <a href="${SITE_URL}/" target="_blank">
+                <img src="${EMAIL_LOGO_URL}" alt="${BRAND_NAME} Logo" />
               </a>
             </div>
             <div class="content">
@@ -1350,17 +1362,17 @@ const getEmailTemplate = (type, data) => {
             </div>
             <div class="footer">
               <div class="socials">
-                <a href="https://www.facebook.com/grabatozae/" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_1_axvzvv.jpg" alt="Facebook" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://www.instagram.com/grabatoz/" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107124/WhatsApp_Image_2025-07-21_at_7.10.18_AM_xgjv5f.jpg" alt="Instagram" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://x.com/GrabAtoz" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107545/WhatsApp_Image_2025-07-21_at_7.10.18_AM_2_cwzjg6.png" alt="X" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://www.linkedin.com/company/grabatozae" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_3_ll6y2i.jpg" alt="LinkedIn" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.facebook}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_1_axvzvv.jpg" alt="Facebook" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.instagram}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107124/WhatsApp_Image_2025-07-21_at_7.10.18_AM_xgjv5f.jpg" alt="Instagram" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.x}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107545/WhatsApp_Image_2025-07-21_at_7.10.18_AM_2_cwzjg6.png" alt="X" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.linkedin}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_3_ll6y2i.jpg" alt="LinkedIn" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
               </div>
-              <p>This email was sent by: support@grabatoz.ae</p>
+              <p>This email was sent by: ${SUPPORT_CONTACT_EMAIL}</p>
               <br/>
               <p>Kindly Do Not Reply to this Email</p>
               <br/>
               <div style="margin-top: 10px; color: #888;">
-                &copy; 2025 Graba2z. All rights reserved.<br />
+                &copy; ${new Date().getFullYear()} ${BRAND_NAME}. All rights reserved.<br />
                 <span style="font-size:12px;">If you did not submit this review, disregard this message.</span>
               </div>
             </div>
@@ -1519,13 +1531,13 @@ const getEmailTemplate = (type, data) => {
         <body>
           <div class="container">
             <div class="header">
-              <a href="https://www.graba2z.ae/" target="_blank">
-                <img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753105567/admin-logo_ruxcjj.png" alt="Graba2z Logo" />
+              <a href="${SITE_URL}/" target="_blank">
+                <img src="${EMAIL_LOGO_URL}" alt="${BRAND_NAME} Logo" />
               </a>
             </div>
             <div class="content">
               <div class="success-icon">✓</div>
-              <h2>Welcome to Graba2z!</h2>
+              <h2>Welcome to ${BRAND_NAME}!</h2>
               <p>Hi <b>${data.name || "Customer"}</b>,<br />
               Your account has been created successfully. You can now use the following credentials to log in anytime:</p>
               <div class="credentials-box">
@@ -1537,22 +1549,22 @@ const getEmailTemplate = (type, data) => {
               <div class="note-box">
                 <strong>Important:</strong> We recommend changing your password after your first login for security purposes.
               </div>
-              <a href="https://www.graba2z.ae/login" class="login-btn">Login to Your Account</a>
-              <p style="margin-top: 2em; color: #888; font-size: 1em;">Continue shopping and enjoy exclusive deals on Graba2z!</p>
+              <a href="${SITE_URL}/login" class="login-btn">Login to Your Account</a>
+              <p style="margin-top: 2em; color: #888; font-size: 1em;">Continue shopping and enjoy exclusive deals on ${BRAND_NAME}!</p>
             </div>
             <div class="footer">
               <div class="socials">
-                <a href="https://www.facebook.com/grabatozae/" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_1_axvzvv.jpg" alt="Facebook" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://www.instagram.com/grabatoz/" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107124/WhatsApp_Image_2025-07-21_at_7.10.18_AM_xgjv5f.jpg" alt="Instagram" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://x.com/GrabAtoz" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107545/WhatsApp_Image_2025-07-21_at_7.10.18_AM_2_cwzjg6.png" alt="X" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
-                <a href="https://www.linkedin.com/company/grabatozae" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_3_ll6y2i.jpg" alt="LinkedIn" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.facebook}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_1_axvzvv.jpg" alt="Facebook" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.instagram}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107124/WhatsApp_Image_2025-07-21_at_7.10.18_AM_xgjv5f.jpg" alt="Instagram" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.x}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107545/WhatsApp_Image_2025-07-21_at_7.10.18_AM_2_cwzjg6.png" alt="X" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
+                <a href="${SOCIAL_LINKS.linkedin}" target="_blank"><img src="https://res.cloudinary.com/dyfhsu5v6/image/upload/v1753107123/WhatsApp_Image_2025-07-21_at_7.10.18_AM_3_ll6y2i.jpg" alt="LinkedIn" style="width:32px;height:32px;margin:0 10px;vertical-align:middle;background:transparent;border-radius:8px;box-shadow:none;" /></a>
               </div>
-              <p>This email was sent by: support@grabatoz.ae</p>
+              <p>This email was sent by: ${SUPPORT_CONTACT_EMAIL}</p>
               <br/>
               <p>Kindly Do Not Reply to this Email</p>
               <br/>
               <div style="margin-top: 10px; color: #888;">
-                &copy; 2025 Graba2z. All rights reserved.<br />
+                &copy; ${new Date().getFullYear()} ${BRAND_NAME}. All rights reserved.<br />
                 <span style="font-size:12px;">If you did not create this account, please contact our support team.</span>
               </div>
             </div>
@@ -1568,30 +1580,30 @@ const getEmailTemplate = (type, data) => {
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Graba2z</title>
+          <title>${BRAND_NAME}</title>
           ${baseStyle}
         </head>
         <body>
           <div class="email-container">
             <div class="header">
-              <img src="https://graba2z.ae/logo.png" alt="Graba2z" class="logo" />
+              <img src="${EMAIL_LOGO_URL}" alt="${BRAND_NAME}" class="logo" />
             </div>
             <div class="content">
-              <p>Thank you for choosing Graba2z!</p>
+              <p>Thank you for choosing ${BRAND_NAME}!</p>
             </div>
             <div class="footer">
               <h3>Get in Touch</h3>
               <div class="social-icons">
-                <a href="https://facebook.com/graba2z" class="social-icon">f</a>
-                <a href="https://twitter.com/graba2z" class="social-icon">t</a>
-                <a href="https://instagram.com/graba2z" class="social-icon">@</a>
-                <a href="https://linkedin.com/company/graba2z" class="social-icon">in</a>
+                <a href="${SOCIAL_LINKS.facebook}" class="social-icon">f</a>
+                <a href="${SOCIAL_LINKS.x}" class="social-icon">t</a>
+                <a href="${SOCIAL_LINKS.instagram}" class="social-icon">@</a>
+                <a href="${SOCIAL_LINKS.linkedin}" class="social-icon">in</a>
               </div>
               <div class="contact-info">
                 <p><strong>This email was sent by:</strong><br>
-                <a href="mailto:order@grabatoz.ae">order@grabatoz.ae</a></p>
+                <a href="mailto:${ORDER_CONTACT_EMAIL}">${ORDER_CONTACT_EMAIL}</a></p>
                 <p><strong>For any questions please send an email to:</strong><br>
-                <a href="mailto:support@grabatoz.ae">support@grabatoz.ae</a></p>
+                <a href="mailto:${SUPPORT_CONTACT_EMAIL}">${SUPPORT_CONTACT_EMAIL}</a></p>
               </div>
             </div>
           </div>
@@ -1745,7 +1757,7 @@ const sendEmail = async (to, subject, html, senderType = "support") => {
 export const sendVerificationEmail = async (email, name, code) => {
   try {
     const html = getEmailTemplate("emailVerification", { name, code })
-    await sendEmail(email, "Verify Your Email - Graba2z", html, "support")
+    await sendEmail(email, `Verify Your Email - ${BRAND_NAME}`, html, "support")
     return { success: true }
   } catch (error) {
     console.error("Failed to send verification email:", error)
@@ -1783,7 +1795,7 @@ export const sendOrderPlacedEmail = async (order) => {
         customerEmail,
       })
 
-      const customerSubject = `Order Confirmation #${orderNumber} - Graba2z`
+      const customerSubject = `Order Confirmation #${orderNumber} - ${BRAND_NAME}`
       await sendEmail(customerEmail, customerSubject, customerHtml, "order")
       recipientsSent.push(customerEmail)
     }
@@ -1897,7 +1909,7 @@ export const sendOrderStatusUpdateEmail = async (order) => {
       returned: "Order Returned",
     }
 
-    const subject = `${statusMessages[normalizedStatus] || "Order Update"} #${orderNumber} - Graba2z`
+    const subject = `${statusMessages[normalizedStatus] || "Order Update"} #${orderNumber} - ${BRAND_NAME}`
     for (const recipient of recipients) {
       await sendEmail(recipient, subject, sanitizedHtml, "order")
     }
@@ -1914,7 +1926,7 @@ export const sendOrderStatusUpdateEmail = async (order) => {
 export const sendReviewVerificationEmail = async (email, name, code, productName, rating, comment) => {
   try {
     const html = getEmailTemplate("reviewVerification", { name, code, productName, rating, comment })
-    await sendEmail(email, "Verify Your Product Review - Graba2z", html, "support")
+    await sendEmail(email, `Verify Your Product Review - ${BRAND_NAME}`, html, "support")
     return { success: true }
   } catch (error) {
     console.error("Failed to send review verification email:", error)
@@ -1929,7 +1941,7 @@ export const sendAccountDeletionEmail = async (email, name, code) => {
     const html = getEmailTemplate("accountDeletion", { name, code })
     console.log("[sendAccountDeletionEmail] Template generated, length:", html.length)
     console.log("[sendAccountDeletionEmail] Calling sendEmail with support sender")
-    const result = await sendEmail(email, "Account Deletion Verification - Graba2z", html, "support")
+    const result = await sendEmail(email, `Account Deletion Verification - ${BRAND_NAME}`, html, "support")
     console.log("[sendAccountDeletionEmail] Email sent successfully:", result)
     return { success: true }
   } catch (error) {
@@ -1953,7 +1965,7 @@ export const sendNewsletterConfirmation = async (email, preferences) => {
       <p style="color: #888; font-size: 13px; margin-top: 24px;">This is an automated message. Please do not reply.</p>
     </div>
   `
-  await sendEmail(email, "Newsletter Subscription Confirmed - Graba2z", html, "support")
+  await sendEmail(email, `Newsletter Subscription Confirmed - ${BRAND_NAME}`, html, "support")
 }
 
 export const sendResetPasswordEmail = async (email, name, resetLink) => {
@@ -1965,10 +1977,10 @@ export const sendResetPasswordEmail = async (email, name, resetLink) => {
         <p>We received a request to reset your password. Click the button below to set a new password. This link is valid for 60 minutes.</p>
         <a href="${resetLink}" style="display: inline-block; margin: 24px 0; padding: 12px 24px; background: #84cc16; color: #fff; border-radius: 4px; text-decoration: none; font-weight: bold;">Reset Password</a>
         <p>If you did not request this, you can safely ignore this email.</p>
-        <p style="color: #888; font-size: 12px; margin-top: 32px;">&copy; ${new Date().getFullYear()} Graba2z</p>
+        <p style="color: #888; font-size: 12px; margin-top: 32px;">&copy; ${new Date().getFullYear()} ${BRAND_NAME}</p>
       </div>
     `
-    await sendEmail(email, "Reset Your Password - Graba2z", html, "support")
+    await sendEmail(email, `Reset Your Password - ${BRAND_NAME}`, html, "support")
     return { success: true }
   } catch (error) {
     console.error("Failed to send reset password email:", error)
@@ -1981,7 +1993,7 @@ export const sendGuestAccountCreatedEmail = async (email, name, password) => {
   try {
     console.log(`[sendGuestAccountCreatedEmail] Sending account credentials to ${email}`)
     const html = getEmailTemplate("guestAccountCreated", { name, email, password })
-    await sendEmail(email, "Your Graba2z Account Has Been Created - Graba2z", html, "support")
+    await sendEmail(email, `Your ${BRAND_NAME} Account Has Been Created - ${BRAND_NAME}`, html, "support")
     console.log(`[sendGuestAccountCreatedEmail] Email sent successfully to ${email}`)
     return { success: true }
   } catch (error) {
