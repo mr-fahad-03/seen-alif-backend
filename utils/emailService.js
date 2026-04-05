@@ -18,26 +18,16 @@ const toAbsoluteUrl = (src) => {
   return `${base}/uploads/${s}`
 }
 
-// Create transporters for order and support emails
-const orderTransporter = nodemailer.createTransport({
-  host: process.env.ORDER_EMAIL_HOST,
-  port: Number(process.env.ORDER_EMAIL_PORT),
-  secure: process.env.ORDER_EMAIL_SECURE === "true",
-  auth: {
-    user: process.env.ORDER_EMAIL_USER,
-    pass: process.env.ORDER_EMAIL_PASS,
-  },
-})
-
-const supportTransporter = nodemailer.createTransport({
-  host: process.env.SUPPORT_EMAIL_HOST,
-  port: Number(process.env.SUPPORT_EMAIL_PORT),
-  secure: process.env.SUPPORT_EMAIL_SECURE === "true",
-  auth: {
-    user: process.env.SUPPORT_EMAIL_USER,
-    pass: process.env.SUPPORT_EMAIL_PASS,
-  },
-})
+const createTransporter = ({ host, port, secure, user, pass }) =>
+  nodemailer.createTransport({
+    host,
+    port: Number(port),
+    secure: secure === "true",
+    auth: {
+      user,
+      pass,
+    },
+  })
 
 const ORDER_NOTIFICATION_EMAIL = (process.env.ORDER_NOTIFICATION_EMAIL || "order@grabatoz.ae").trim()
 
@@ -108,12 +98,24 @@ const formatPaymentMethod = (actualPaymentMethod, paymentMethod) => {
 const getMailConfig = (type) => {
   if (type === "order") {
     return {
-      transporter: orderTransporter,
+      transporter: createTransporter({
+        host: process.env.ORDER_EMAIL_HOST,
+        port: process.env.ORDER_EMAIL_PORT,
+        secure: process.env.ORDER_EMAIL_SECURE,
+        user: process.env.ORDER_EMAIL_USER,
+        pass: process.env.ORDER_EMAIL_PASS,
+      }),
       from: `Graba2z Orders <${process.env.ORDER_EMAIL_USER}>`,
     }
   } else {
     return {
-      transporter: supportTransporter,
+      transporter: createTransporter({
+        host: process.env.SUPPORT_EMAIL_HOST,
+        port: process.env.SUPPORT_EMAIL_PORT,
+        secure: process.env.SUPPORT_EMAIL_SECURE,
+        user: process.env.SUPPORT_EMAIL_USER,
+        pass: process.env.SUPPORT_EMAIL_PASS,
+      }),
       from: `Graba2z Support <${process.env.SUPPORT_EMAIL_USER}>`,
     }
   }

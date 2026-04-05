@@ -1,6 +1,6 @@
+import "dotenv/config"
 import express from "express"
 import cors from "cors"
-import dotenv from "dotenv"
 import path from "path"
 import { fileURLToPath } from "url"
 import sharp from "sharp"
@@ -73,8 +73,6 @@ import customSliderItemRoutes from "./routes/customSliderItemRoutes.js"
 import superAdminRoutes from "./routes/superAdminRoutes.js"
 import reportsRoutes from "./routes/reportsRoutes.js"
 import homepageRoutes from "./routes/homepageRoutes.js"
-
-dotenv.config()
 
 // Connect to databases - await both
 await connectDB()
