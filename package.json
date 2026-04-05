@@ -1,0 +1,44 @@
+{
+  "name": "client-server-app",
+  "version": "1.0.0",
+  "description": "A basic client-server application",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "update-sitemap": "node scripts/update-sitemap.js",
+    "fix-redirects": "node scripts/fix-redirects.js",
+    "cache:clear": "node -e \"import('./services/cacheService.js').then(m => m.default.initialize().then(() => m.default.flushAll().then(() => process.exit(0))))\""
+  },
+  "dependencies": {
+    "@getbrevo/brevo": "^2.2.0",
+    "@sendgrid/mail": "^8.1.4",
+    "axios": "^1.13.6",
+    "bcryptjs": "^2.4.3",
+    "bing-translate-api": "^4.2.0",
+    "cloudinary": "^1.41.3",
+    "colors": "^1.4.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "csvtojson": "^2.0.10",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-async-handler": "^1.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.2",
+    "morgan": "^1.10.0",
+    "multer": "^2.0.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "node-fetch": "^3.3.2",
+    "nodemailer": "^6.9.7",
+    "redis": "^4.7.1",
+    "resend": "^4.1.2",
+    "sharp": "^0.34.5",
+    "slugify": "^1.6.6",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
