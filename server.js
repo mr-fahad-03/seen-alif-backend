@@ -93,8 +93,7 @@ app.set('trust proxy', true)
 // CORS configuration
 app.use(cors({
   origin: [
-    'https://www.graba2z.ae',
-    'https://www.grabatoz.ae',
+    'https://www.seenalif.com',
     'http://localhost:3000'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
