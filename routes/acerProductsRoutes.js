@@ -212,9 +212,9 @@ router.get(
       let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
-    <title><![CDATA[GrabA2Z - Official Acer Products]]></title>
-    <link>https://www.grabatoz.ae</link>
-    <description><![CDATA[Official Acer Product Feed from GrabA2Z - Total: ${totalCount} products. Auto-updated in real-time.]]></description>
+    <title><![CDATA[Seen Alif - Official Acer Products]]></title>
+    <link>https://www.seenalif.com</link>
+    <description><![CDATA[Official Acer Product Feed from Seen Alif - Total: ${totalCount} products. Auto-updated in real-time.]]></description>
     <language>en</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <g:feed_type>Acer Official Partner Feed</g:feed_type>
@@ -228,13 +228,13 @@ router.get(
           if (!product.name || product.name.trim() === "") continue
 
           const cleanSlug = (product.slug || product._id.toString()).replace(/&/g, '%26')
-          const productUrl = `https://www.grabatoz.ae/product/${cleanSlug}`
+          const productUrl = `https://www.seenalif.com/product/${cleanSlug}`
           
           let imageUrl = product.image
             ? product.image.startsWith("http")
               ? product.image
-              : `https://www.grabatoz.ae${product.image}`
-            : "https://www.grabatoz.ae/placeholder.jpg"
+              : `https://www.seenalif.com${product.image}`
+            : "https://www.seenalif.com/placeholder.jpg"
           imageUrl = imageUrl.replace(/&/g, '&amp;')
 
           const availability = determineAvailability(product)
@@ -247,7 +247,7 @@ router.get(
             ? product.offerPrice : null
 
           const cleanDescription = truncateDescription(
-            product.description || product.shortDescription || product.name || "Acer product available at GrabA2Z"
+            product.description || product.shortDescription || product.name || "Acer product available at Seen Alif"
           )
           const truncatedTitle = truncateTitle(product.name)
 
@@ -305,7 +305,7 @@ router.get(
           if (product.galleryImages && product.galleryImages.length > 0) {
             product.galleryImages.slice(0, 10).forEach((img) => {
               if (img) {
-                let additionalImageUrl = img.startsWith("http") ? img : `https://www.grabatoz.ae${img}`
+                let additionalImageUrl = img.startsWith("http") ? img : `https://www.seenalif.com${img}`
                 additionalImageUrl = additionalImageUrl.replace(/&/g, '&amp;')
                 xml += `
       <g:additional_image_link>${additionalImageUrl}</g:additional_image_link>`
@@ -321,7 +321,7 @@ router.get(
           // Custom labels for Acer
           xml += `
       <g:custom_label_0>Acer Official</g:custom_label_0>
-      <g:custom_label_1>GrabA2Z Partner</g:custom_label_1>`
+      <g:custom_label_1>Seen Alif Partner</g:custom_label_1>`
 
           if (product.featured) {
             xml += `
@@ -404,7 +404,7 @@ router.get(
           stockStatus: p.stockStatus,
           availability: determineAvailability(p),
           image: p.image,
-          url: `https://www.grabatoz.ae/product/${p.slug || p._id}`
+          url: `https://www.seenalif.com/product/${p.slug || p._id}`
         }))
       })
     } catch (error) {

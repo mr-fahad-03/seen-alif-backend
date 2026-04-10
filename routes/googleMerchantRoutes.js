@@ -324,9 +324,9 @@ router.get(
       })
 
       const feed = {
-        title: "GrabA2Z Products",
-        link: "https://www.grabatoz.ae",
-        description: "GrabA2Z Product Feed for Google Merchant Center",
+        title: "Seen Alif Products",
+        link: "https://www.seenalif.com",
+        description: "Seen Alif Product Feed for Google Merchant Center",
         language: "en",
         lastBuildDate: new Date().toISOString(),
         totalProducts: totalCount,
@@ -360,12 +360,12 @@ router.get(
 
           // Escape & in slug for valid URLs
           const cleanSlug = (product.slug || product._id.toString()).replace(/&/g, '%26')
-          const productUrl = `https://www.grabatoz.ae/product/${cleanSlug}`
+          const productUrl = `https://www.seenalif.com/product/${cleanSlug}`
           const imageUrl = product.image
             ? product.image.startsWith("http")
               ? product.image
-              : `https://www.grabatoz.ae${product.image}`
-            : "https://www.grabatoz.ae/placeholder.jpg"
+              : `https://www.seenalif.com${product.image}`
+            : "https://www.seenalif.com/placeholder.jpg"
 
           // Use the improved availability logic
           const availability = determineAvailability(product)
@@ -403,7 +403,7 @@ router.get(
           if (product.galleryImages && product.galleryImages.length > 0) {
             product.galleryImages.slice(0, 10).forEach((img) => {
               if (img) {
-                const additionalImageUrl = img.startsWith("http") ? img : `https://www.grabatoz.ae${img}`
+                const additionalImageUrl = img.startsWith("http") ? img : `https://www.seenalif.com${img}`
                 additionalImages.push(additionalImageUrl)
               }
             })
@@ -575,9 +575,9 @@ router.get(
       let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
-    <title><![CDATA[GrabA2Z Products]]></title>
-    <link>https://www.grabatoz.ae</link>
-    <description><![CDATA[GrabA2Z Product Feed for Google Merchant Center - Total: ${totalCount} products]]></description>
+    <title><![CDATA[Seen Alif Products]]></title>
+    <link>https://www.seenalif.com</link>
+    <description><![CDATA[Seen Alif Product Feed for Google Merchant Center - Total: ${totalCount} products]]></description>
     <language>en</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 `
@@ -599,14 +599,14 @@ router.get(
 
           // Escape & in slug for valid XML URLs
           const cleanSlug = (product.slug || product._id.toString()).replace(/&/g, '%26')
-          const productUrl = `https://www.grabatoz.ae/product/${cleanSlug}`
+          const productUrl = `https://www.seenalif.com/product/${cleanSlug}`
           
           // Escape & in image URLs for valid XML
           let imageUrl = product.image
             ? product.image.startsWith("http")
               ? product.image
-              : `https://www.grabatoz.ae${product.image}`
-            : "https://www.grabatoz.ae/placeholder.jpg"
+              : `https://www.seenalif.com${product.image}`
+            : "https://www.seenalif.com/placeholder.jpg"
           imageUrl = imageUrl.replace(/&/g, '&amp;')
 
           // Use the improved availability logic
@@ -707,7 +707,7 @@ router.get(
           if (product.galleryImages && product.galleryImages.length > 0) {
             product.galleryImages.slice(0, 10).forEach((img) => {
               if (img) {
-                let additionalImageUrl = img.startsWith("http") ? img : `https://www.grabatoz.ae${img}`
+                let additionalImageUrl = img.startsWith("http") ? img : `https://www.seenalif.com${img}`
                 // Escape & for valid XML
                 additionalImageUrl = additionalImageUrl.replace(/&/g, '&amp;')
                 xml += `
@@ -926,9 +926,9 @@ router.get(
       let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
-    <title><![CDATA[GrabA2Z ${brand.name} Products]]></title>
-    <link>https://www.grabatoz.ae</link>
-    <description><![CDATA[GrabA2Z ${brand.name} Product Feed - Total: ${totalCount} products]]></description>
+    <title><![CDATA[Seen Alif ${brand.name} Products]]></title>
+    <link>https://www.seenalif.com</link>
+    <description><![CDATA[Seen Alif ${brand.name} Product Feed - Total: ${totalCount} products]]></description>
     <language>en</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 `
@@ -950,14 +950,14 @@ router.get(
 
           // Escape & in slug for valid XML URLs
           const cleanSlug = (product.slug || product._id.toString()).replace(/&/g, '%26')
-          const productUrl = `https://www.grabatoz.ae/product/${cleanSlug}`
+          const productUrl = `https://www.seenalif.com/product/${cleanSlug}`
           
           // Escape & in image URLs for valid XML
           let imageUrl = product.image
             ? product.image.startsWith("http")
               ? product.image
-              : `https://www.grabatoz.ae${product.image}`
-            : "https://www.grabatoz.ae/placeholder.jpg"
+              : `https://www.seenalif.com${product.image}`
+            : "https://www.seenalif.com/placeholder.jpg"
           imageUrl = imageUrl.replace(/&/g, '&amp;')
 
           // Use the improved availability logic
@@ -1054,7 +1054,7 @@ router.get(
           if (product.galleryImages && product.galleryImages.length > 0) {
             product.galleryImages.slice(0, 10).forEach((img) => {
               if (img) {
-                let additionalImageUrl = img.startsWith("http") ? img : `https://www.grabatoz.ae${img}`
+                let additionalImageUrl = img.startsWith("http") ? img : `https://www.seenalif.com${img}`
                 additionalImageUrl = additionalImageUrl.replace(/&/g, '&amp;')
                 xml += `
       <g:additional_image_link>${additionalImageUrl}</g:additional_image_link>`
@@ -1156,7 +1156,6 @@ router.get(
 )
 
 export default router
-
 
 
 

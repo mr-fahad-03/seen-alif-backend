@@ -52,8 +52,8 @@ class TamaraService {
           "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
           "Sec-Ch-Ua-Mobile": "?0",
           "Sec-Ch-Ua-Platform": '"Windows"',
-          Origin: "https://graba2z.ae",
-          Referer: "https://graba2z.ae/",
+          Origin: "https://www.seenalif.com",
+          Referer: "https://www.seenalif.com/",
           DNT: "1",
           "Upgrade-Insecure-Requests": "1",
           Authorization: `Bearer ${this.apiKey}`,
@@ -131,7 +131,7 @@ class TamaraService {
         throw new Error(`Missing required fields: ${missingFields.join(", ")}`)
       }
 
-      const frontendBaseUrl = process.env.FRONTEND_URL || "https://www.graba2z.ae"
+      const frontendBaseUrl = process.env.FRONTEND_URL || "https://www.seenalif.com"
       const apiBaseUrl =
         process.env.API_URL ||
         process.env.BACKEND_URL ||
@@ -202,7 +202,7 @@ class TamaraService {
           phone_number: checkoutData.consumer.phone_number,
         },
         country_code: checkoutData.country_code || "AE",
-        description: checkoutData.description || `Order for ${checkoutData.items?.length || 1} items from Graba2z`,
+        description: checkoutData.description || `Order for ${checkoutData.items?.length || 1} items from Seen Alif`,
         merchant_url: {
           cancel: merchantUrl.cancel || `${frontendBaseUrl}/payment/cancel`,
           failure: merchantUrl.failure || `${frontendBaseUrl}/payment/cancel`,
@@ -231,7 +231,7 @@ class TamaraService {
           phone_number: checkoutData.shipping_address.phone_number,
           region: checkoutData.shipping_address.region,
         },
-        platform: checkoutData.platform || "Graba2z Online Store",
+        platform: checkoutData.platform || "Seen Alif Online Store",
         is_mobile: checkoutData.is_mobile || false,
         locale: checkoutData.locale || "en_US",
         // Optional risk assessment and additional data
@@ -614,8 +614,8 @@ class TamaraService {
       "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
       "Sec-Ch-Ua-Mobile": "?0",
       "Sec-Ch-Ua-Platform": '"Windows"',
-      Origin: "https://graba2z.ae",
-      Referer: "https://graba2z.ae/",
+      Origin: "https://www.seenalif.com",
+      Referer: "https://www.seenalif.com/",
       DNT: "1",
     }
   }

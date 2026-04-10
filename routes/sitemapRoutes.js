@@ -10,7 +10,7 @@ import OfferPage from "../models/offerPageModel.js"
 import GamingZonePage from "../models/gamingZonePageModel.js"
 
 const router = express.Router()
-const baseUrl = "https://www.grabatoz.ae"
+const baseUrl = "https://www.seenalif.com"
 const localePrefixes = ["/ae-en", "/ae-ar"]
 
 const formatDate = (date) => {

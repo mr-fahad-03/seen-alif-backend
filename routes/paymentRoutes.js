@@ -1028,7 +1028,7 @@ router.post("/tamara/checkout", optionalProtect, async (req, res) => {
       items_count: items.length,
     })
 
-    const frontendBaseUrl = process.env.FRONTEND_URL || "https://www.graba2z.ae"
+    const frontendBaseUrl = process.env.FRONTEND_URL || "https://www.seenalif.com"
     const requestBaseUrl = `${req.protocol}://${req.get("host")}`
     const notificationUrl = normalizeTamaraWebhookUrl(
       merchant_url?.notification || `${requestBaseUrl}/api/payment/tamara/webhook`,
@@ -1083,7 +1083,7 @@ router.post("/tamara/checkout", optionalProtect, async (req, res) => {
         phone_number: consumer.phone_number,
       },
       country_code: country_code || "AE",
-      description: description || `Order for ${items.length} items from Graba2z`,
+      description: description || `Order for ${items.length} items from Seen Alif`,
       merchant_url: {
         cancel: merchant_url?.cancel || `${frontendBaseUrl}/payment/cancel`,
         failure: merchant_url?.failure || `${frontendBaseUrl}/payment/cancel`,
@@ -1112,7 +1112,7 @@ router.post("/tamara/checkout", optionalProtect, async (req, res) => {
         phone_number: shipping_address.phone_number,
         region: shipping_address.region,
       },
-      platform: platform || "Graba2z Online Store",
+      platform: platform || "Seen Alif Online Store",
       is_mobile: is_mobile || false,
       locale: locale || "en_US",
       // Optional fields
@@ -1462,7 +1462,7 @@ router.get("/tamara/order/:orderId", protect, async (req, res) => {
         Authorization: `Bearer ${process.env.TAMARA_API_KEY}`,
         "Content-Type": "application/json",
         Accept: "application/json",
-        "User-Agent": "Mozilla/5.0 (compatible; Graba2z-Ecommerce/1.0; +https://graba2z.ae)",
+        "User-Agent": "Mozilla/5.0 (compatible; SeenAlif-Ecommerce/1.0; +https://www.seenalif.com)",
         "Accept-Language": "en-US,en;q=0.9",
         "Accept-Encoding": "gzip, deflate, br",
         "Cache-Control": "no-cache",
@@ -1632,7 +1632,7 @@ router.post("/ngenius/card", async (req, res) => {
       return res.status(500).json({ error: "Access token not received" })
     }
 
-    const defaultFrontendUrl = process.env.FRONTEND_URL || "https://www.graba2z.ae"
+    const defaultFrontendUrl = process.env.FRONTEND_URL || "https://www.seenalif.com"
     const redirectWithParams = appendQueryParams(redirectUrl || `${defaultFrontendUrl}/payment/success`, {
       orderId,
       payment_method: paymentMethod,

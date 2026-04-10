@@ -254,7 +254,7 @@ app.use('/', sitemapRoutes)
 // Health check route
 app.get("/", (req, res) => {
   res.json({
-    message: "GrabA2Z API is running!",
+    message: "Seen Alif API is running!",
     version: "1.0.0",
     environment: config.NODE_ENV,
   })
@@ -278,4 +278,3 @@ const PORT = config.PORT
 app.listen(PORT, () => {
   console.log(`Server running in ${config.NODE_ENV} mode on port ${PORT}`)
 })
-
