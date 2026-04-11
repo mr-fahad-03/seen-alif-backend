@@ -1569,7 +1569,7 @@ router.get("/reviews", protect, admin, async (req, res) => {
           url1: `/uploads/reviews/${reviewObj.image}`,
           url2: `/uploads/${reviewObj.image}`,
           url3: reviewObj.image.startsWith("/") ? reviewObj.image : `/uploads/reviews/${reviewObj.image}`,
-          fullUrl: `http://localhost:5000/uploads/reviews/${reviewObj.image}`,
+          fullUrl: `http://localhost:5001/uploads/reviews/${reviewObj.image}`,
         }
       }
 
