@@ -265,6 +265,119 @@ function escapeRegex(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
+const isDuplicateKeyError = (error) =>
+  error?.code === 11000 || String(error?.message || "").includes("E11000 duplicate key error")
+
+const reviveSubCategoryIfNeeded = async (subCategory) => {
+  if (!subCategory) return null
+
+  let changed = false
+  if (subCategory.isDeleted) {
+    subCategory.isDeleted = false
+    subCategory.deletedAt = undefined
+    changed = true
+  }
+  if (subCategory.isActive === false) {
+    subCategory.isActive = true
+    changed = true
+  }
+
+  if (changed) {
+    await subCategory.save()
+  }
+
+  return subCategory
+}
+
+const resolveOrCreateSubCategory = async ({
+  nameValue,
+  parentCategoryId,
+  parentSubId = null,
+  level = 1,
+  userId = null,
+}) => {
+  const normalizedName = String(nameValue || "").trim()
+  if (!normalizedName) return null
+
+  const normalizedParentSubId = parentSubId || null
+  const escapedName = escapeRegex(normalizedName)
+  const contextQuery = {
+    name: { $regex: new RegExp(`^${escapedName}$`, "i") },
+    level,
+    parentSubCategory: normalizedParentSubId,
+  }
+  if (parentCategoryId) {
+    contextQuery.category = parentCategoryId
+  }
+
+  const existingInContext = await SubCategory.findOne(contextQuery)
+  if (existingInContext) {
+    await reviveSubCategoryIfNeeded(existingInContext)
+    return existingInContext._id
+  }
+
+  const baseSlug = generateSlug(normalizedName)
+  if (!baseSlug) {
+    throw new Error(`Invalid subcategory name: "${normalizedName}"`)
+  }
+
+  // Reuse the same slug if it already belongs to the same logical subcategory.
+  const existingByBaseSlug = await SubCategory.findOne({ slug: baseSlug })
+  if (existingByBaseSlug) {
+    const sameName = String(existingByBaseSlug.name || "").trim().toLowerCase() === normalizedName.toLowerCase()
+    const sameCategory =
+      !parentCategoryId || String(existingByBaseSlug.category || "") === String(parentCategoryId)
+    const sameLevel = Number(existingByBaseSlug.level || 1) === Number(level)
+
+    if (sameName || (sameCategory && sameLevel)) {
+      await reviveSubCategoryIfNeeded(existingByBaseSlug)
+      return existingByBaseSlug._id
+    }
+  }
+
+  const nameAr = await translateText(normalizedName)
+
+  for (let attempt = 0; attempt < 25; attempt += 1) {
+    const candidateSlug =
+      attempt === 0 ? baseSlug : `${baseSlug}-${level}-${attempt}`
+
+    const existingByCandidate = await SubCategory.findOne({ slug: candidateSlug })
+    if (existingByCandidate) {
+      const sameName =
+        String(existingByCandidate.name || "").trim().toLowerCase() === normalizedName.toLowerCase()
+      if (sameName) {
+        await reviveSubCategoryIfNeeded(existingByCandidate)
+        return existingByCandidate._id
+      }
+      continue
+    }
+
+    try {
+      const created = await SubCategory.create({
+        name: normalizedName,
+        nameAr,
+        slug: candidateSlug,
+        category: parentCategoryId,
+        parentSubCategory: normalizedParentSubId,
+        level,
+        isActive: true,
+        createdBy: userId,
+      })
+      return created._id
+    } catch (error) {
+      if (!isDuplicateKeyError(error)) throw error
+    }
+  }
+
+  const fallback = await SubCategory.findOne(contextQuery)
+  if (fallback) {
+    await reviveSubCategoryIfNeeded(fallback)
+    return fallback._id
+  }
+
+  throw new Error(`Unable to resolve subcategory "${normalizedName}" due to slug conflict`)
+}
+
 // @desc    Fetch all products (Admin only - includes inactive)
 // @route   GET /api/products/admin
 // @access  Private/Admin
@@ -600,11 +713,15 @@ router.get(
 
     const products = await Product.find(query)
       .select(
-        "name nameAr slug sku shortDescription shortDescriptionAr description descriptionAr price offerPrice discount image countInStock stockStatus stockStatusAr brand category parentCategory featured tags createdAt rating numReviews",
+        "name nameAr slug sku shortDescription shortDescriptionAr description descriptionAr price offerPrice discount image countInStock stockStatus stockStatusAr brand category subCategory parentCategory subCategory2 subCategory3 subCategory4 featured tags createdAt rating numReviews",
       )
       .populate("brand", "name nameAr slug")
       .populate("category", "name nameAr slug")
+      .populate("subCategory", "name nameAr slug")
       .populate("parentCategory", "name nameAr slug")
+      .populate("subCategory2", "name nameAr slug")
+      .populate("subCategory3", "name nameAr slug")
+      .populate("subCategory4", "name nameAr slug")
       .lean()
       .skip((page - 1) * Number.parseInt(limit))
       .limit(Number.parseInt(limit))
@@ -3048,66 +3165,93 @@ router.post(
       // Helper to resolve category/brand by name only (no ID support)
       const resolveCategoryOrBrand = async (Model, nameValue, createIfMissing = true, userId = null) => {
         if (!nameValue) return null
-        
-        // Try by name
-        if (nameValue && nameValue.trim() !== '') {
-          const found = await Model.findOne({ name: nameValue.trim() })
-          if (found) return found._id
-          
-          // Create new if requested
-          if (createIfMissing) {
-            const slug = generateSlug(nameValue.trim())
-            
-            // Translate name for Arabic field
-            const nameAr = await translateText(nameValue.trim());
-            
+
+        const normalizedName = String(nameValue).trim()
+        if (!normalizedName) return null
+
+        const escapedName = escapeRegex(normalizedName)
+        let found = await Model.findOne({ name: { $regex: new RegExp(`^${escapedName}$`, "i") } })
+        if (found) return found._id
+
+        const slug = generateSlug(normalizedName)
+        if (!slug) return null
+
+        found = await Model.findOne({ slug })
+        if (found) return found._id
+
+        if (createIfMissing) {
+          const nameAr = await translateText(normalizedName)
+
+          try {
             const newDoc = await Model.create({
-              name: nameValue.trim(),
+              name: normalizedName,
               nameAr,
               slug,
               isActive: true,
               createdBy: userId,
             })
             return newDoc._id
+          } catch (error) {
+            if (!isDuplicateKeyError(error)) throw error
+
+            const existingBySlug = await Model.findOne({ slug })
+            if (existingBySlug) return existingBySlug._id
+
+            const existingByName = await Model.findOne({ name: { $regex: new RegExp(`^${escapedName}$`, "i") } })
+            if (existingByName) return existingByName._id
           }
         }
-        
+
         return null
       }
 
       // Helper to resolve subcategory by name (with level support)
       const resolveSubCategory = async (nameValue, parentCategoryId, parentSubId, level, userId = null) => {
-        if (!nameValue) return null
-        
-        // Try by name and parent
-        if (nameValue && nameValue.trim() !== '') {
-          const query = { name: nameValue.trim() }
-          if (parentCategoryId) query.category = parentCategoryId
-          
-          const found = await SubCategory.findOne(query)
-          if (found) return found._id
-          
-          // Create new subcategory
-          const slug = generateSlug(nameValue.trim())
-          
-          // Translate name for Arabic field
-          const nameAr = await translateText(nameValue.trim());
-          
-          const newSub = await SubCategory.create({
-            name: nameValue.trim(),
-            nameAr,
-            slug,
-            category: parentCategoryId,
-            parentSubCategory: parentSubId || null,
-            level,
-            isActive: true,
-            createdBy: userId,
-          })
-          return newSub._id
+        return resolveOrCreateSubCategory({
+          nameValue,
+          parentCategoryId,
+          parentSubId,
+          level,
+          userId,
+        })
+      }
+
+      const getRowValue = (row, keys = []) => {
+        for (const key of keys) {
+          if (row[key] !== undefined && row[key] !== null) {
+            const value = String(row[key]).trim()
+            if (value !== "") return value
+          }
         }
-        
+        return ""
+      }
+
+      const findExistingProductByUniqueFields = async ({ objectId, sku, barcode, slug }) => {
+        if (objectId && mongoose.Types.ObjectId.isValid(objectId)) {
+          const byId = await Product.findById(objectId)
+          if (byId) return byId
+        }
+
+        if (sku) {
+          const bySku = await Product.findOne({ sku })
+          if (bySku) return bySku
+        }
+
+        if (barcode) {
+          const byBarcode = await Product.findOne({ barcode })
+          if (byBarcode) return byBarcode
+        }
+
+        if (slug) {
+          const bySlug = await Product.findOne({ slug })
+          if (bySlug) return bySlug
+        }
+
         return null
       }
+
+      const defaultParentCategoryName = "Uncategorized"
+      const defaultBrandName = "Generic"
 
       // Second pass: Process products
       for (const [i, row] of rows.entries()) {
@@ -3119,8 +3263,13 @@ router.post(
             continue
           }
 
-          const objectId = row._id || row.id || row.ID || row['_id']
+          const objectId = (row._id || row.id || row.ID || row["_id"] || "").toString().trim()
           const productName = row.name
+          const rowSku = normalizeOptionalUniqueField(getRowValue(row, ["sku", "SKU", "Sku"]))
+          const rowBarcode = normalizeOptionalUniqueField(
+            getRowValue(row, ["barcode", "Barcode", "BARCODE", "bar_code", "bar code"]),
+          )
+          const rowSlug = sanitizeSlug(getRowValue(row, ["slug", "Slug", "SLUG"]) || generateSlug(productName || ""))
           
           if (!productName || productName.trim() === '') {
             errors.push({
@@ -3136,8 +3285,8 @@ router.post(
           let isUpdate = false
 
           // If ObjectId is provided, try to find existing product
-          if (objectId && objectId.trim() !== '' && mongoose.Types.ObjectId.isValid(objectId.trim())) {
-            product = await Product.findById(objectId.trim())
+          if (objectId && mongoose.Types.ObjectId.isValid(objectId)) {
+            product = await Product.findById(objectId)
             if (product) {
               isUpdate = true
             } else {
@@ -3145,7 +3294,7 @@ router.post(
               errors.push({
                 row: rowNum,
                 productName,
-                objectId: objectId.trim(),
+                objectId,
                 error: 'Product with provided ObjectId not found in database',
               })
               failed++
@@ -3153,10 +3302,28 @@ router.post(
             }
           }
 
-          // Resolve parent category (by name only)
+          // Auto-update existing products by SKU/barcode/slug when _id is not provided
+          if (!isUpdate) {
+            const existingByUniqueField = await findExistingProductByUniqueFields({
+              sku: rowSku,
+              barcode: rowBarcode,
+              slug: rowSlug,
+            })
+
+            if (existingByUniqueField) {
+              product = existingByUniqueField
+              isUpdate = true
+            }
+          }
+
+          const parentCategoryName =
+            getRowValue(row, ["parent_category", "parentCategory", "parentcategory", "Parent Category", "parent category"]) ||
+            defaultParentCategoryName
+
+          // Resolve parent category (with fallback)
           const parentCategoryId = await resolveCategoryOrBrand(
             Category,
-            row.parent_category,
+            parentCategoryName,
             true,
             req.user._id
           )
@@ -3171,17 +3338,29 @@ router.post(
             continue
           }
 
-          // Resolve brand (by name only)
+          const brandName = getRowValue(row, ["brand", "Brand", "BRAND"]) || defaultBrandName
+
+          // Resolve brand (with fallback)
           const brandId = await resolveCategoryOrBrand(
             Brand,
-            row.brand,
+            brandName,
             true,
             req.user._id
           )
 
+          if (!brandId) {
+            errors.push({
+              row: rowNum,
+              productName,
+              error: "Brand is required and could not be resolved",
+            })
+            failed++
+            continue
+          }
+
           // Resolve category levels (by name only)
           const level1Id = await resolveSubCategory(
-            row.category_level_1,
+            getRowValue(row, ["category_level_1", "category", "subcategory", "sub_category", "category1", "category level 1"]),
             parentCategoryId,
             null,
             1,
@@ -3189,7 +3368,7 @@ router.post(
           )
 
           const level2Id = await resolveSubCategory(
-            row.category_level_2,
+            getRowValue(row, ["category_level_2", "sub_category_2", "subcategory2", "subCategory2", "category2", "category level 2"]),
             parentCategoryId,
             level1Id,
             2,
@@ -3197,7 +3376,7 @@ router.post(
           )
 
           const level3Id = await resolveSubCategory(
-            row.category_level_3,
+            getRowValue(row, ["category_level_3", "sub_category_3", "subcategory3", "subCategory3", "category3", "category level 3"]),
             parentCategoryId,
             level2Id || level1Id,
             3,
@@ -3205,7 +3384,7 @@ router.post(
           )
 
           const level4Id = await resolveSubCategory(
-            row.category_level_4,
+            getRowValue(row, ["category_level_4", "sub_category_4", "subcategory4", "subCategory4", "category4", "category level 4"]),
             parentCategoryId,
             level3Id || level2Id || level1Id,
             4,
@@ -3215,9 +3394,9 @@ router.post(
           // Prepare product data
           const productData = {
             name: productName.trim(),
-            slug: row.slug || generateSlug(productName.trim()),
-            sku: row.sku && row.sku.trim() !== '' ? row.sku.trim() : undefined,
-            barcode: row.barcode && row.barcode.trim() !== '' ? row.barcode.trim() : undefined,
+            slug: rowSlug,
+            sku: rowSku,
+            barcode: rowBarcode,
             parentCategory: parentCategoryId,
             category: level1Id,
             subCategory: level1Id, // for backward compatibility
@@ -3280,22 +3459,35 @@ router.post(
           } else {
             // CREATE new product (no ObjectId provided)
             productData.createdBy = req.user._id
-            
-            // Check for duplicate SKU/barcode/slug before creating
-            if (productData.sku) {
-              const existingBySku = await Product.findOne({ sku: productData.sku })
-              if (existingBySku) {
-                errors.push({
-                  row: rowNum,
-                  productName,
-                  error: `Product with SKU '${productData.sku}' already exists`,
-                })
-                failed++
-                continue
-              }
-            }
 
-            const newProduct = await Product.create(productData)
+            let newProduct = null
+            try {
+              newProduct = await Product.create(productData)
+            } catch (createError) {
+              if (!isDuplicateKeyError(createError)) throw createError
+
+              // If a duplicate key appears during create, convert this row to an update.
+              const existingAfterDuplicate = await findExistingProductByUniqueFields({
+                sku: productData.sku,
+                barcode: productData.barcode,
+                slug: productData.slug,
+              })
+
+              if (!existingAfterDuplicate) throw createError
+
+              Object.assign(existingAfterDuplicate, productData)
+              await existingAfterDuplicate.save()
+
+              results.push({
+                row: rowNum,
+                action: "updated",
+                productId: existingAfterDuplicate._id,
+                productName: existingAfterDuplicate.name,
+                sku: existingAfterDuplicate.sku,
+              })
+              updated++
+              continue
+            }
             
             results.push({
               row: rowNum,
@@ -3413,33 +3605,14 @@ router.post(
           if (mongoose.Types.ObjectId.isValid(categoryStr)) {
             subCategory = await SubCategory.findById(categoryStr)
           } else if (parentCategory) {
-            subCategory = await SubCategory.findOne({
-              name: categoryStr,
-              category: parentCategory._id,
-              isDeleted: { $ne: true },
+            const subCategoryId = await resolveOrCreateSubCategory({
+              nameValue: categoryStr,
+              parentCategoryId: parentCategory._id,
+              parentSubId: null,
+              level: 1,
+              userId: req.user._id,
             })
-
-            if (!subCategory) {
-              const slug = categoryStr
-                .toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, "")
-                .replace(/\s+/g, "-")
-                .replace(/-+/g, "-")
-                .trim()
-
-              // Translate subcategory fields
-              const subNameAr = await translateText(categoryStr);
-
-              subCategory = new SubCategory({
-                name: categoryStr,
-                nameAr: subNameAr,
-                slug: slug,
-                category: parentCategory._id,
-                isActive: true,
-                createdBy: req.user._id,
-              })
-              await subCategory.save()
-            }
+            subCategory = subCategoryId ? await SubCategory.findById(subCategoryId) : null
           }
         }
 
