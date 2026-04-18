@@ -74,10 +74,11 @@ router.post(
   "/for-product",
   asyncHandler(async (req, res) => {
     const { productId, productPrice } = req.body
+    const normalizedProductPrice = Number(productPrice)
 
     console.log('For-product request:', { productId, productPrice })
 
-    if (!productId || !productPrice) {
+    if (!productId || productPrice === undefined || productPrice === null || Number.isNaN(normalizedProductPrice)) {
       res.status(400)
       throw new Error("Product ID and price are required")
     }
@@ -166,7 +167,7 @@ router.post(
       })
 
       if (protectionObj.pricingType === "percentage" && protectionObj.pricePercentage) {
-        let calculatedPrice = (productPrice * protectionObj.pricePercentage) / 100
+        let calculatedPrice = (normalizedProductPrice * protectionObj.pricePercentage) / 100
 
         console.log(`Raw calculated: ${calculatedPrice}`)
 
