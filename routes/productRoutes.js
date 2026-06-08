@@ -202,6 +202,75 @@ const normalizeOptionalUniqueField = (value) => {
   return normalized !== "" ? normalized : undefined
 }
 
+const getVariationProductId = (variation) => {
+  if (!variation) return ""
+  const rawProduct = typeof variation === "object" && variation.product ? variation.product : variation
+  if (typeof rawProduct === "object" && rawProduct?._id) return rawProduct._id.toString()
+  return String(rawProduct || "").trim()
+}
+
+const normalizeVariationIds = (variations = [], currentProductId = "") => {
+  const currentId = String(currentProductId || "")
+  return Array.from(
+    new Set(
+      (Array.isArray(variations) ? variations : [])
+        .map(getVariationProductId)
+        .filter((id) => id && id !== currentId && mongoose.Types.ObjectId.isValid(id)),
+    ),
+  )
+}
+
+const syncProductVariationGroup = async ({ productId, variations = [], previousVariationIds = [] }) => {
+  const currentId = productId.toString()
+  const requestedIds = normalizeVariationIds(variations, currentId)
+  const desiredGroupIds = Array.from(new Set([currentId, ...requestedIds]))
+  const managedIds = Array.from(new Set([currentId, ...requestedIds, ...previousVariationIds.map(String)]))
+  const managedIdSet = new Set(managedIds)
+  const desiredGroupIdSet = new Set(desiredGroupIds)
+
+  const productIdsReferencingCurrent = await Product.find({ "variations.product": productId }).select("_id")
+  const affectedIds = Array.from(
+    new Set([
+      ...managedIds,
+      ...productIdsReferencingCurrent.map((product) => product._id.toString()),
+    ]),
+  ).filter((id) => mongoose.Types.ObjectId.isValid(id))
+
+  const textByProductId = new Map(
+    (Array.isArray(variations) ? variations : [])
+      .map((variation) => [getVariationProductId(variation), variation?.variationText || ""])
+      .filter(([id]) => id && mongoose.Types.ObjectId.isValid(id)),
+  )
+
+  for (const affectedId of affectedIds) {
+    const affectedProduct = await Product.findById(affectedId)
+    if (!affectedProduct) continue
+
+    const affectedProductId = affectedProduct._id.toString()
+    const keepEntries = (affectedProduct.variations || []).filter((variation) => {
+      const variationProductId = getVariationProductId(variation)
+      return variationProductId && variationProductId !== affectedProductId && !managedIdSet.has(variationProductId)
+    })
+
+    if (desiredGroupIdSet.has(affectedProductId)) {
+      for (const desiredId of desiredGroupIds) {
+        if (desiredId === affectedProductId) continue
+        const alreadyExists = keepEntries.some((variation) => getVariationProductId(variation) === desiredId)
+        if (!alreadyExists) {
+          keepEntries.push({
+            product: desiredId,
+            variationText: textByProductId.get(desiredId) || "",
+          })
+        }
+      }
+    }
+
+    affectedProduct.variations = keepEntries
+    affectedProduct.markModified("variations")
+    await affectedProduct.save()
+  }
+}
+
 const parseSpecificationsInput = (input) => {
   if (Array.isArray(input)) {
     return input
@@ -976,8 +1045,16 @@ router.get(
   "/:id",
   asyncHandler(async (req, res) => {
     const product = await Product.findById(req.params.id)
+      .populate("parentCategory", "name nameAr slug")
       .populate("category", "name nameAr slug")
+      .populate("subCategory2", "name nameAr slug")
+      .populate("subCategory3", "name nameAr slug")
+      .populate("subCategory4", "name nameAr slug")
       .populate("brand", "name nameAr")
+      .populate({
+        path: "variations.product",
+        select: "name nameAr slug image price offerPrice sku isActive hideFromShop selfVariationText selfVariationTextAr reverseVariationText reverseVariationTextAr",
+      })
 
     if (product && product.isActive) {
       res.json(product)
@@ -1267,60 +1344,10 @@ router.post(
 
     const createdProduct = await product.save()
     
-    // Bidirectional variation sync: Update all related products
-    if (productData.variations && Array.isArray(productData.variations)) {
-      const selfText = productData.selfVariationText || productData.reverseVariationText || ""
-      const variationIds = productData.variations
-        .filter(v => v && v.product && v.product !== createdProduct._id.toString())
-        .map(v => v.product)
-      
-      console.log(`[SYNC] Product ${createdProduct._id} adding variations:`, variationIds)
-      console.log(`[SYNC] Self variation text:`, selfText)
-      
-      // For each variation in this product
-      for (const variationId of variationIds) {
-        const variationProduct = await Product.findById(variationId)
-        if (variationProduct) {
-          let modified = false
-          
-          // Add current product to the variation's variations list if not already there
-          const existingVariationIndex = variationProduct.variations.findIndex(
-            v => (v.product || v).toString() === createdProduct._id.toString()
-          )
-          if (existingVariationIndex === -1) {
-            console.log(`[SYNC] Adding product ${createdProduct._id} to ${variationProduct._id}'s variations`)
-            // Note: We store empty variationText here because we'll use selfVariationText from the product itself
-            variationProduct.variations.push({ 
-              product: createdProduct._id, 
-              variationText: "" 
-            })
-            variationProduct.markModified('variations')
-            modified = true
-          }
-          
-          // Also sync other variations bidirectionally (full mesh connectivity)
-          const otherVariationIds = variationIds.filter(id => id !== variationId)
-          for (const otherId of otherVariationIds) {
-            const hasOther = variationProduct.variations.some(
-              v => (v.product || v).toString() === otherId
-            )
-            if (!hasOther) {
-              console.log(`[SYNC] Adding cross-variation ${otherId} to ${variationProduct._id}`)
-              variationProduct.variations.push({ product: otherId, variationText: "" })
-              variationProduct.markModified('variations')
-              modified = true
-            }
-          }
-          
-          if (modified) {
-            await variationProduct.save()
-            console.log(`[SYNC] Saved ${variationProduct._id} with ${variationProduct.variations.length} variations`)
-          }
-        }
-      }
-    }
-    
-
+    await syncProductVariationGroup({
+      productId: createdProduct._id,
+      variations: productData.variations || [],
+    })
     
     const populatedProduct = await Product.findById(createdProduct._id)
       .populate("parentCategory", "name slug")
@@ -1356,6 +1383,7 @@ router.put(
 
     if (product) {
       const { parentCategory, category, subCategory2, subCategory3, subCategory4, slug, ...updateData } = req.body
+      const previousVariationIds = normalizeVariationIds(product.variations || [], product._id.toString())
 
       // Verify parentCategory exists if provided
       if (parentCategory) {
@@ -1510,77 +1538,13 @@ router.put(
 
       const updatedProduct = await product.save()
       
-      // Bidirectional variation sync: Update all related products
-      if (updateData.variations && Array.isArray(updateData.variations)) {
-        const selfText = updateData.selfVariationText || updateData.reverseVariationText || ""
-        const variationIds = updateData.variations
-          .filter(v => v && v.product && v.product !== product._id.toString())
-          .map(v => v.product)
-        
-        console.log(`[UPDATE SYNC] Product ${product._id} updating variations:`, variationIds)
-        console.log(`[UPDATE SYNC] Self variation text:`, selfText)
-        
-        // For each variation in this product
-        for (const variationId of variationIds) {
-          const variationProduct = await Product.findById(variationId)
-          if (variationProduct) {
-            let modified = false
-            
-            // Add current product to the variation's variations list if not already there
-            const existingVariationIndex = variationProduct.variations.findIndex(
-              v => (v.product || v).toString() === product._id.toString()
-            )
-            if (existingVariationIndex === -1) {
-              console.log(`[UPDATE SYNC] Adding product ${product._id} to ${variationProduct._id}'s variations`)
-              // Note: We store empty variationText here because we use selfVariationText from the product itself
-              variationProduct.variations.push({ 
-                product: product._id, 
-                variationText: "" 
-              })
-              variationProduct.markModified('variations')
-              modified = true
-            }
-            
-            // Also sync other variations bidirectionally (full mesh connectivity)
-            const otherVariationIds = variationIds.filter(id => id !== variationId)
-            for (const otherId of otherVariationIds) {
-              const hasOther = variationProduct.variations.some(
-                v => (v.product || v).toString() === otherId
-              )
-              if (!hasOther) {
-                console.log(`[UPDATE SYNC] Adding cross-variation ${otherId} to ${variationProduct._id}`)
-                variationProduct.variations.push({ product: otherId, variationText: "" })
-                variationProduct.markModified('variations')
-                modified = true
-              }
-            }
-            
-            if (modified) {
-              await variationProduct.save()
-              console.log(`[UPDATE SYNC] Saved ${variationProduct._id} with ${variationProduct.variations.length} variations`)
-            }
-          }
-        }
-        
-        // Remove current product from variations of products no longer in the list
-        const allProducts = await Product.find({ 
-          "variations.product": product._id,
-          _id: { $ne: product._id }
+      if (updateData.variations !== undefined) {
+        await syncProductVariationGroup({
+          productId: product._id,
+          variations: updateData.variations || [],
+          previousVariationIds,
         })
-        console.log(`[UPDATE SYNC] Found ${allProducts.length} products with current product in variations`)
-        for (const relatedProduct of allProducts) {
-          if (!variationIds.includes(relatedProduct._id.toString())) {
-            console.log(`[UPDATE SYNC] Removing product ${product._id} from ${relatedProduct._id}'s variations`)
-            relatedProduct.variations = relatedProduct.variations.filter(
-              v => (v.product || v).toString() !== product._id.toString()
-            )
-            relatedProduct.markModified('variations')
-            await relatedProduct.save()
-          }
-        }
       }
-      
-
       
       const populatedProduct = await Product.findById(updatedProduct._id)
         .populate("parentCategory", "name slug")
