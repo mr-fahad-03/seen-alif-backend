@@ -9,7 +9,6 @@ const buyerProtectionSchema = mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["warranty", "damage_protection", "accidental_extended"],
     },
     duration: {
       type: String,
