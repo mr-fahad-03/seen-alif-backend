@@ -135,7 +135,7 @@ class TamaraService {
       const apiBaseUrl =
         process.env.API_URL ||
         process.env.BACKEND_URL ||
-        (process.env.NODE_ENV === "production" ? "https://api.grabatoz.ae" : "https://your-ngrok-url.ngrok.io")
+        (process.env.NODE_ENV === "production" ? "https://api.seenalif.com" : "https://your-ngrok-url.ngrok.io")
       const merchantUrl = checkoutData.merchant_url || {}
       const notificationUrl = String(merchantUrl.notification || `${apiBaseUrl}/api/payment/tamara/webhook`).replace(
         /\/api\/webhooks\/tamara\/?$/i,

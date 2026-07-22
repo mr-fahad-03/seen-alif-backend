@@ -10,7 +10,10 @@ import OfferPage from "../models/offerPageModel.js"
 import GamingZonePage from "../models/gamingZonePageModel.js"
 
 const router = express.Router()
-const baseUrl = "https://www.seenalif.com"
+const baseUrl = process.env.SITE_BASE_URL || "https://www.seenalif.com"
+
+// Ensure no trailing slash so generated URLs are clean
+const normalizedBaseUrl = String(baseUrl).replace(/\/+$/, "")
 const localePrefixes = ["/ae-en", "/ae-ar"]
 
 const formatDate = (date) => {
@@ -114,7 +117,7 @@ router.get(
         const localizedPaths = includeLocales ? withLocales(path) : [normalizePath(path)]
 
         for (const localizedPath of localizedPaths) {
-          const loc = `${baseUrl}${localizedPath}`
+          const loc = `${normalizedBaseUrl}${localizedPath}`
           if (emitted.has(loc)) continue
           emitted.add(loc)
           xml += toUrlNode(loc, lastmod, changefreq, priority)
@@ -123,6 +126,7 @@ router.get(
 
       // Root redirects to /ae-en in the app, so keep localized homepages as canonical sitemap entries.
       const staticPages = [
+        // NOTE: path is WITHOUT locale prefix. We add /ae-en and /ae-ar automatically.
         { path: "", priority: "1.0", changefreq: "daily" },
         { path: "/shop", priority: "0.9", changefreq: "daily" },
         { path: "/product-category", priority: "0.9", changefreq: "daily" },

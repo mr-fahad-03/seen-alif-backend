@@ -8,73 +8,13 @@ import { logActivity } from "../middleware/permissionMiddleware.js"
 import { cacheMiddleware, invalidateCache } from "../middleware/cacheMiddleware.js"
 
 const router = express.Router()
-const TRANSLATION_TIMEOUT_MS = Number(process.env.TRANSLATION_TIMEOUT_MS || 4000)
-const BING_TRANSLATION_TIMEOUT_MS = Number(process.env.BING_TRANSLATION_TIMEOUT_MS || 3000)
+import { translateEnToAr } from "../utils/translateWithFallback.js"
 const ENABLE_BRAND_TRANSLATION = process.env.ENABLE_BRAND_TRANSLATION !== "false"
-const ENABLE_BING_TRANSLATION_FALLBACK = process.env.ENABLE_BING_TRANSLATION_FALLBACK !== "false"
-let cachedBingTranslate = null
-let bingLoaderAttempted = false
-
-const withTimeout = (promise, ms, timeoutMessage) =>
-  Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      setTimeout(() => reject(new Error(timeoutMessage)), ms)
-    }),
-  ])
-
-const loadBingTranslate = async () => {
-  if (bingLoaderAttempted) return cachedBingTranslate
-  bingLoaderAttempted = true
-
-  try {
-    const bingModule = await import("bing-translate-api")
-    cachedBingTranslate = bingModule?.translate || null
-    if (!cachedBingTranslate) {
-      console.error("Bing translation fallback unavailable: translate export not found")
-    }
-  } catch (error) {
-    console.error("Bing translation package not available:", error.message)
-    cachedBingTranslate = null
-  }
-
-  return cachedBingTranslate
-}
 
 // Helper for translation
 const translateText = async (text) => {
   if (!ENABLE_BRAND_TRANSLATION) return ""
-  const normalizedText = String(text || "").trim()
-  if (!normalizedText) return ""
-
-  try {
-    const response = await axios.post(
-      "https://langaimodel.grabatoz.ae/api/translate/en-ar",
-      { text: normalizedText },
-      { timeout: TRANSLATION_TIMEOUT_MS },
-    )
-    const translated = response.data.translation || ""
-    if (translated) return translated
-  } catch (error) {
-    console.error("Primary translation failed, trying Bing fallback:", error.message)
-  }
-
-  if (!ENABLE_BING_TRANSLATION_FALLBACK) return ""
-
-  try {
-    const bingTranslate = await loadBingTranslate()
-    if (!bingTranslate) return ""
-
-    const bingResult = await withTimeout(
-      bingTranslate(normalizedText, null, "ar"),
-      BING_TRANSLATION_TIMEOUT_MS,
-      "Bing translation timeout",
-    )
-    return bingResult?.translation || ""
-  } catch (error) {
-    console.error("Bing fallback translation failed:", error.message)
-    return ""
-  }
+  return await translateEnToAr(text)
 }
 
 const buildSlug = (value = "") =>

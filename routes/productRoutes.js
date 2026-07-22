@@ -21,86 +21,13 @@ import mongoose from "mongoose"
 import { deleteLocalFile, isCloudinaryUrl } from "../config/multer.js"
 
 const router = express.Router()
-const TRANSLATION_TIMEOUT_MS = Number(process.env.TRANSLATION_TIMEOUT_MS || 4000)
-const BING_TRANSLATION_TIMEOUT_MS = Number(process.env.BING_TRANSLATION_TIMEOUT_MS || 3000)
-const TRANSLATION_FAILURE_COOLDOWN_MS = Number(process.env.TRANSLATION_FAILURE_COOLDOWN_MS || 60000)
+import { translateEnToAr } from "../utils/translateWithFallback.js"
 const ENABLE_PRODUCT_TRANSLATION = process.env.ENABLE_PRODUCT_TRANSLATION !== "false"
-const ENABLE_BING_TRANSLATION_FALLBACK = process.env.ENABLE_BING_TRANSLATION_FALLBACK !== "false"
-let cachedBingTranslate = null
-let bingLoaderAttempted = false
-let primaryTranslatorUnavailableUntil = 0
-let bingTranslatorUnavailableUntil = 0
-
-const withTimeout = (promise, ms, timeoutMessage) =>
-  Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      setTimeout(() => reject(new Error(timeoutMessage)), ms)
-    }),
-  ])
-
-const loadBingTranslate = async () => {
-  if (bingLoaderAttempted) return cachedBingTranslate
-  bingLoaderAttempted = true
-
-  try {
-    const bingModule = await import("bing-translate-api")
-    cachedBingTranslate = bingModule?.translate || null
-    if (!cachedBingTranslate) {
-      console.error("Product translation fallback unavailable: translate export not found")
-    }
-  } catch (error) {
-    console.error("Product translation fallback package not available:", error.message)
-    cachedBingTranslate = null
-  }
-
-  return cachedBingTranslate
-}
 
 // Helper for translation
 const translateText = async (text) => {
   if (!ENABLE_PRODUCT_TRANSLATION) return ""
-  const normalizedText = String(text || "").trim()
-  if (!normalizedText) return ""
-
-  const now = Date.now()
-
-  if (now >= primaryTranslatorUnavailableUntil) {
-    try {
-      const response = await axios.post(
-        "https://langaimodel.grabatoz.ae/api/translate/en-ar",
-        { text: normalizedText },
-        { timeout: TRANSLATION_TIMEOUT_MS },
-      )
-      const translated = response.data.translation || ""
-      if (translated) return translated
-    } catch (error) {
-      primaryTranslatorUnavailableUntil = Date.now() + TRANSLATION_FAILURE_COOLDOWN_MS
-      console.error("Product primary translation failed, trying Bing fallback:", error.message)
-    }
-  }
-
-  if (!ENABLE_BING_TRANSLATION_FALLBACK) return ""
-  if (Date.now() < bingTranslatorUnavailableUntil) return ""
-
-  try {
-    const bingTranslate = await loadBingTranslate()
-    if (!bingTranslate) {
-      bingTranslatorUnavailableUntil = Date.now() + TRANSLATION_FAILURE_COOLDOWN_MS
-      return ""
-    }
-
-    const bingResult = await withTimeout(
-      bingTranslate(normalizedText, null, "ar"),
-      BING_TRANSLATION_TIMEOUT_MS,
-      "Bing product translation timeout",
-    )
-    return bingResult?.translation || ""
-  } catch (error) {
-    bingTranslatorUnavailableUntil = Date.now() + TRANSLATION_FAILURE_COOLDOWN_MS
-    console.error("Bing product translation fallback failed:", error.message)
-    return ""
-  }
+  return await translateEnToAr(text)
 }
 
 // Multer setup for Excel parsing (use memory storage for Vercel compatibility)

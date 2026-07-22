@@ -1,7 +1,7 @@
 import axios from "axios"
 
 const PRIMARY_TRANSLATION_URL =
-  process.env.TRANSLATION_PRIMARY_URL || "https://langaimodel.grabatoz.ae/api/translate/en-ar"
+  process.env.TRANSLATION_PRIMARY_URL || ""
 const PRIMARY_TRANSLATION_TIMEOUT_MS = Number(process.env.TRANSLATION_TIMEOUT_MS || 4000)
 const BING_TRANSLATION_TIMEOUT_MS = Number(process.env.BING_TRANSLATION_TIMEOUT_MS || 3000)
 const BING_TRANSLATION_COOLDOWN_MS = Number(process.env.BING_TRANSLATION_COOLDOWN_MS || 300000)
@@ -42,7 +42,7 @@ export const translateEnToAr = async (text) => {
   const normalizedText = typeof text === "string" ? text.trim() : ""
   if (!normalizedText) return ""
 
-  if (ENABLE_PRIMARY_TRANSLATION) {
+  if (ENABLE_PRIMARY_TRANSLATION && PRIMARY_TRANSLATION_URL) {
     try {
       const response = await axios.post(
         PRIMARY_TRANSLATION_URL,

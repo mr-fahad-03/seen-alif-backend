@@ -15,9 +15,9 @@ const updateSitemap = async () => {
     console.log('🚀 Fetching latest sitemap from server...')
     
     // Determine the server URL
-    const serverUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://api.grabatoz.ae' 
-      : 'http://localhost:5001'
+    const serverUrl = process.env.NODE_ENV === 'production'
+      ? (process.env.SITEMAP_SERVER_URL || 'https://api.seenalif.com')
+      : (process.env.SITEMAP_SERVER_URL || 'http://localhost:5001')
     
     // Fetch sitemap from server
     const response = await axios.get(`${serverUrl}/sitemap.xml`, {
