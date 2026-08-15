@@ -34,11 +34,11 @@ const config = {
   TABBY_SECRET_KEY: process.env.TABBY_SECRET_KEY,
   TABBY_API_URL: process.env.TABBY_API_URL || "https://api.tabby.ai",
 
-  NGENIUS_API_URL: process.env.NGENIUS_API_URL,
+  NGENIUS_API_URL: process.env.NGENIUS_API_URL || "https://api-gateway.ngenius-payments.com",
   NGENIUS_REALM: process.env.NGENIUS_REALM,
-  NGENIUS_API_KEY: process.env.NGENIUS_API_KEY,
+  NGENIUS_API_KEY: process.env.NGENIUS_API_KEY || process.env.NG_API_KEY,
   NGENIUS_API_SECRET: process.env.NGENIUS_API_SECRET,
-  NGENIUS_OUTLET_ID: process.env.NGENIUS_OUTLET_ID,
+  NGENIUS_OUTLET_ID: process.env.NGENIUS_OUTLET_ID || process.env.NG_OUTLET_ID,
 
   // Cloudinary Configuration
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,

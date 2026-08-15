@@ -1612,12 +1612,22 @@ router.post("/ngenius/card", async (req, res) => {
   }
 
   try {
+    let rawApiKey = (process.env.NGENIUS_API_KEY || process.env.NG_API_KEY || "").trim()
+    if (rawApiKey.startsWith("WFjYmM")) {
+      rawApiKey = "N" + rawApiKey
+    } else if (rawApiKey.includes(":")) {
+      rawApiKey = Buffer.from(rawApiKey).toString("base64")
+    }
+
     const basicToken =
-      "Njk1NWExNDItMjA3ZC00MWZiLTk5NjQtZTM5OWY5MmVjMjRmOjhmZGM1NThhLTM0ZWYtNDFjMC05M2NjLTk5OWNhZjM5ZTA2OQ=="
+      rawApiKey ||
+      "NWFjYmM5MDUtMzMzMS00ZDdkLTg3MjktNTFjMzk3MTkwNjIzOmE2ZGY1ZTg0LWU5YjMtNGZmOS05Y2ZkLWExMjg5ZDM5ZDNlZg=="
+    const apiUrl = process.env.NGENIUS_API_URL || "https://api-gateway.ngenius-payments.com"
+    const outletId = process.env.NGENIUS_OUTLET_ID || process.env.NG_OUTLET_ID || "fa86eca0-0c43-4264-b5b5-085a0c875450"
 
     // Step 1: Get access token
     const tokenRes = await axios.post(
-      `${process.env.NGENIUS_API_URL}/identity/auth/access-token`,
+      `${apiUrl}/identity/auth/access-token`,
       {},
       {
         headers: {
@@ -1633,12 +1643,23 @@ router.post("/ngenius/card", async (req, res) => {
     }
 
     const defaultFrontendUrl = process.env.FRONTEND_URL || "https://www.seenalif.com"
-    const redirectWithParams = appendQueryParams(redirectUrl || `${defaultFrontendUrl}/payment/success`, {
+    let rawRedirect = redirectUrl || `${defaultFrontendUrl}/payment/success`
+    let rawCancel = cancelUrl || `${defaultFrontendUrl}/payment/cancel`
+
+    // NGenius API requires https:// URLs
+    if (rawRedirect.startsWith("http://localhost") || rawRedirect.startsWith("http://127.0.0.1")) {
+      rawRedirect = rawRedirect.replace(/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, "https://www.seenalif.com")
+    }
+    if (rawCancel.startsWith("http://localhost") || rawCancel.startsWith("http://127.0.0.1")) {
+      rawCancel = rawCancel.replace(/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, "https://www.seenalif.com")
+    }
+
+    const redirectWithParams = appendQueryParams(rawRedirect, {
       orderId,
       payment_method: paymentMethod,
       amount,
     })
-    const cancelWithParams = appendQueryParams(cancelUrl || `${defaultFrontendUrl}/payment/cancel`, {
+    const cancelWithParams = appendQueryParams(rawCancel, {
       orderId,
       payment_method: paymentMethod,
     })
@@ -1657,7 +1678,7 @@ router.post("/ngenius/card", async (req, res) => {
     }
 
     const orderRes = await axios.post(
-      `${process.env.NGENIUS_API_URL}/transactions/outlets/${process.env.NG_OUTLET_ID}/orders`,
+      `${apiUrl}/transactions/outlets/${outletId}/orders`,
       orderPayload,
       {
         headers: {
