@@ -4,7 +4,7 @@ const BRAND_NAME = "Seen Alif"
 const SITE_URL = "https://www.seenalif.com"
 const EMAIL_LOGO_URL = `${SITE_URL}/seenalif.png`
 const SUPPORT_CONTACT_EMAIL = (process.env.SUPPORT_EMAIL_USER || "support@superboss.ae").trim()
-const ORDER_CONTACT_EMAIL = (process.env.ORDER_EMAIL_USER || "order@superboss.ae").trim()
+const ORDER_CONTACT_EMAIL = (process.env.ORDER_EMAIL_USER || "order@seenalif.ae").trim()
 const SOCIAL_LINKS = {
   facebook: SITE_URL,
   instagram: SITE_URL,
